@@ -47,7 +47,8 @@
                                 position: 'absolute', 
                                 left: `${pdfDisplayDimensions.offsetX + Math.max(0, Math.min(field.position.x, pdfDisplayDimensions.width - 80))}px`, 
                                 top: `${Math.max(0, Math.min(field.position.y, pdfDisplayDimensions.height - 20))}px`, 
-                                fontSize: `${field.fontSize}px` 
+                                fontSize: `${field.fontSize}px`,
+                                transform: 'translateX(-50%)'
                             }"
                         >
                             [{{ getFieldDisplayText(field) }}]
@@ -321,8 +322,7 @@ const selectedConditionValueModel = computed({
 
 // Field type options
 const fieldTypeOptions = [
-    { label: 'Attendee Name', value: 'name' },
-    { label: 'Licence', value: 'licence' },
+    { label: 'Attendee Full Name', value: 'name' },
     { label: 'Custom Text', value: 'custom_text' },
     { label: 'Form Field', value: 'form_field' },
     { label: 'Current Date', value: 'current_date' },

@@ -383,8 +383,13 @@ const renderIdentificationCard = async (attendeeData, eventData, scannedUuid) =>
                 const fontSize = (field.fontSize || 12) * Math.min(scaleX, scaleY)
                 const adjustedDrawY = drawY - fontSize
 
+                // Calculate text width and center it
+                const textWidth = font.widthOfTextAtSize(text, fontSize)
+                const centerX = (field.position.x || 0) * scaleX
+                const centeredPdfX = centerX - (textWidth / 2)
+
                 firstPage.drawText(text, {
-                    x: pdfX,
+                    x: centeredPdfX,
                     y: adjustedDrawY,
                     size: fontSize,
                     font,

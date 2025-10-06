@@ -134,9 +134,13 @@ export default defineEventHandler(async (event) => {
         if (!fieldText) continue
         
         const pdfFontSize = (field.fontSize || 12) * Math.min(scaleX, scaleY)
-        const pdfX = (field.position.x || 0) * scaleX
         const pdfYFromTop = (field.position.y || 0) * scaleY
         const drawY = pdfHeight - pdfYFromTop - pdfFontSize
+
+        // Calculate text width and center it
+        const textWidth = font.widthOfTextAtSize(fieldText, pdfFontSize)
+        const centerX = (field.position.x || 0) * scaleX
+        const pdfX = centerX - (textWidth / 2)
 
         firstPage.drawText(fieldText, {
           x: pdfX,
@@ -152,9 +156,13 @@ export default defineEventHandler(async (event) => {
       if (certificate.name && certificate.name.position) {
         const nameText = `${attendee.first_name} ${attendee.last_name}`
         const pdfFontSize = (certificate.name.fontSize || 12) * Math.min(scaleX, scaleY)
-        const pdfX = (certificate.name.position.x || 0) * scaleX
         const pdfYFromTop = (certificate.name.position.y || 0) * scaleY
         const drawY = pdfHeight - pdfYFromTop - pdfFontSize
+
+        // Calculate text width and center it
+        const textWidth = font.widthOfTextAtSize(nameText, pdfFontSize)
+        const centerX = (certificate.name.position.x || 0) * scaleX
+        const pdfX = centerX - (textWidth / 2)
 
         firstPage.drawText(nameText, {
           x: pdfX,
@@ -181,9 +189,13 @@ export default defineEventHandler(async (event) => {
         
         if (licenceText) {
           const pdfFontSize = (certificate.licence.fontSize || 12) * Math.min(scaleX, scaleY)
-          const pdfX = (certificate.licence.position.x || 0) * scaleX
           const pdfYFromTop = (certificate.licence.position.y || 0) * scaleY
           const drawY = pdfHeight - pdfYFromTop - pdfFontSize
+
+          // Calculate text width and center it
+          const textWidth = font.widthOfTextAtSize(licenceText, pdfFontSize)
+          const centerX = (certificate.licence.position.x || 0) * scaleX
+          const pdfX = centerX - (textWidth / 2)
 
           firstPage.drawText(licenceText, {
             x: pdfX,

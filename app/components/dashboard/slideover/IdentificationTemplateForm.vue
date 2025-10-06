@@ -48,7 +48,8 @@
                                 height: `${getFieldPreviewHeight(field)}px`,
                                 fontSize: `${field.fontSize}px`,
                                 border: field.type === 'qr_code' ? '1px dashed rgba(59,130,246,0.6)' : 'none',
-                                background: field.type === 'qr_code' ? 'rgba(59,130,246,0.08)' : 'transparent'
+                                background: field.type === 'qr_code' ? 'rgba(59,130,246,0.08)' : 'transparent',
+                                transform: field.type !== 'qr_code' ? 'translateX(-50%)' : 'none'
                             }"
                         >
                             <template v-if="field.type === 'qr_code'">
@@ -311,8 +312,7 @@ const selectedConditionValueModel = computed({
 })
 
 const fieldTypeOptions = [
-    { label: 'Attendee Name', value: 'name' },
-    { label: 'Licence', value: 'licence' },
+    { label: 'Attendee Full Name', value: 'name' },
     { label: 'Custom Text', value: 'custom_text' },
     { label: 'Form Field', value: 'form_field' },
     { label: 'Current Date', value: 'current_date' },
