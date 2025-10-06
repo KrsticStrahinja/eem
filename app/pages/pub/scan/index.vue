@@ -277,33 +277,59 @@ const embedQrCode = async (page, pdfDoc, dataUrl, topLeftX, topLeftY, field, sca
 const printPdfBytes = async pdfBytes => {
     if (typeof window === 'undefined') return
 
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-    const blobUrl = URL.createObjectURL(blob)
-    const iframe = document.createElement('iframe')
-    iframe.style.display = 'none'
-    iframe.src = blobUrl
-    document.body.appendChild(iframe)
+    try {
+        // Check if running in Electron with silent print capability
+        if (window.electronAPI?.printSilent || window.electronAPI?.printPdfSilent || window.electronAPI?.print) {
+            console.log('Electron API detected, attempting silent print...')
+            
+            // Convert PDF bytes to base64 for Electron
+            const base64Pdf = btoa(
+                new Uint8Array(pdfBytes).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            )
+            
+            // Try different possible Electron API methods
+            if (window.electronAPI.printPdfSilent) {
+                await window.electronAPI.printPdfSilent(base64Pdf)
+                console.log('PDF sent via printPdfSilent')
+            } else if (window.electronAPI.printSilent) {
+                await window.electronAPI.printSilent(base64Pdf)
+                console.log('PDF sent via printSilent')
+            } else if (window.electronAPI.print) {
+                await window.electronAPI.print(base64Pdf)
+                console.log('PDF sent via print')
+            }
+            
+            return // Exit early, printing handled by Electron
+        }
 
-    const cleanup = () => {
-        setTimeout(() => {
-            document.body.removeChild(iframe)
-            URL.revokeObjectURL(blobUrl)
-        }, 1000)
-    }
+        // Fallback: Standard browser print dialog
+        console.log('Using browser print dialog (not in Electron)')
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+        const blobUrl = URL.createObjectURL(blob)
+        const iframe = document.createElement('iframe')
+        iframe.style.display = 'none'
+        iframe.src = blobUrl
+        document.body.appendChild(iframe)
 
-    iframe.onload = async () => {
-        try {
-            if (window.electronAPI?.printSilent) {
-                await window.electronAPI.printSilent()
-            } else {
+        const cleanup = () => {
+            setTimeout(() => {
+                document.body.removeChild(iframe)
+                URL.revokeObjectURL(blobUrl)
+            }, 1000)
+        }
+
+        iframe.onload = async () => {
+            try {
                 iframe.contentWindow?.focus()
                 iframe.contentWindow?.print()
+            } catch (err) {
+                console.error('Failed to trigger print dialog:', err)
+            } finally {
+                cleanup()
             }
-        } catch (err) {
-            console.error('Failed to trigger print dialog:', err)
-        } finally {
-            cleanup()
         }
+    } catch (err) {
+        console.error('Failed to print PDF:', err)
     }
 }
 
