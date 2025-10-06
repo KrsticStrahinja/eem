@@ -114,14 +114,12 @@ export default defineEventHandler(async (event) => {
     const firstPage = pdfDoc.getPages()[0]
     const { width: pdfWidth, height: pdfHeight } = firstPage.getSize()
 
-    // ===== NOVA JEDNOSTAVNA LOGIKA =====
-    // Frontend preview dimensions (iz CertificateTemplateForm.vue)
-    const previewWidth = 450  // estimatedPdfWidth iz komponente
-    const previewHeight = 600 // iframeHeight iz komponente
+    // Use exact same scaling logic as generate.post.ts and builder
+    const PREVIEW_BASE_WIDTH = 423
+    const PREVIEW_BASE_HEIGHT = 600
     
-    // Scale faktori: pixel → point
-    const scaleX = pdfWidth / previewWidth   // 595.32 / 450 = 1.323
-    const scaleY = pdfHeight / previewHeight // 841.92 / 600 = 1.403
+    const scaleX = pdfWidth / PREVIEW_BASE_WIDTH
+    const scaleY = pdfHeight / PREVIEW_BASE_HEIGHT
     
     // Load a standard font
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -203,17 +201,17 @@ export default defineEventHandler(async (event) => {
         if (!field.position) continue
         
         const fieldText = getFieldText(field)
-        if (!fieldText) continue // Skip empty fields
+        if (!fieldText) continue
         
-        // Direktno mapiranje koordinata iz baze - JEDNOSTAVNO!
-        const fieldX = (field.position.x || 0) * scaleX
-        const fieldY = pdfHeight - ((field.position.y || 0) * scaleY) // Flip Y osa
-        const fieldFontSize = (field.fontSize || 12) * scaleX
+        const pdfFontSize = (field.fontSize || 12) * Math.min(scaleX, scaleY)
+        const pdfX = (field.position.x || 0) * scaleX
+        const pdfYFromTop = (field.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(fieldText, {
-          x: fieldX,
-          y: fieldY,
-          size: fieldFontSize,
+          x: pdfX,
+          y: drawY,
+          size: pdfFontSize,
           font: font,
           color: rgb(0, 0, 0),
         })
@@ -223,14 +221,15 @@ export default defineEventHandler(async (event) => {
       // Draw name
       if (certificateData.name?.position) {
         const nameText = `${attendee.first_name} ${attendee.last_name}`
-        const nameX = (certificateData.name.position.x || 0) * scaleX
-        const nameY = pdfHeight - ((certificateData.name.position.y || 0) * scaleY)
-        const nameFontSize = (certificateData.name.fontSize || 12) * scaleX
+        const pdfFontSize = (certificateData.name.fontSize || 12) * Math.min(scaleX, scaleY)
+        const pdfX = (certificateData.name.position.x || 0) * scaleX
+        const pdfYFromTop = (certificateData.name.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(nameText, {
-          x: nameX,
-          y: nameY,
-          size: nameFontSize,
+          x: pdfX,
+          y: drawY,
+          size: pdfFontSize,
           font: font,
           color: rgb(0, 0, 0),
         })
@@ -251,14 +250,15 @@ export default defineEventHandler(async (event) => {
         }
         
         if (licenceText) {
-          const licenceX = (certificateData.licence.position.x || 0) * scaleX  
-          const licenceY = pdfHeight - ((certificateData.licence.position.y || 0) * scaleY)
-          const licenceFontSize = (certificateData.licence.fontSize || 12) * scaleX
+          const pdfFontSize = (certificateData.licence.fontSize || 12) * Math.min(scaleX, scaleY)
+          const pdfX = (certificateData.licence.position.x || 0) * scaleX
+          const pdfYFromTop = (certificateData.licence.position.y || 0) * scaleY
+          const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
           firstPage.drawText(licenceText, {
-            x: licenceX,
-            y: licenceY,
-            size: licenceFontSize,
+            x: pdfX,
+            y: drawY,
+            size: pdfFontSize,
             font: font,
             color: rgb(0, 0, 0),
           })

@@ -65,6 +65,39 @@ export const useSettings = () => {
         }
     }
 
+    const updateRegistrationSettings = async (registrationData) => {
+        clearError()
+        isLoading.value = true
+        try {
+            // Prepare the payload with registration settings stored as JSON
+            const payload = {
+                id: 1,
+                registration: registrationData,
+                updated_at: new Date().toISOString()
+            }
+
+            const query = supabase
+                .from('settings')
+                .upsert(payload, {
+                    onConflict: 'id',
+                    ignoreDuplicates: false
+                })
+                .select('*')
+                .single()
+
+            const { data, error } = await logUpdate(query, 'settings', payload)
+
+            if (error) throw error
+            settings.value = data
+            return data
+        } catch (err) {
+            errorMessage.value = err?.message || 'Failed to update registration settings'
+            throw err
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     const createSettings = async (settingsData) => {
         clearError()
         isLoading.value = true
@@ -149,6 +182,7 @@ export const useSettings = () => {
         // Methods
         fetchSettings,
         updateSettings,
+        updateRegistrationSettings,
         createSettings,
         getSmtpSettings,
         clearError

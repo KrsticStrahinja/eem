@@ -26,6 +26,18 @@
                                     <div class="flex items-center gap-2">
                                         <UButton size="xs" color="primary" variant="solid" icon="i-lucide-pencil"
                                             @click="openEdit(cert)">Edit</UButton>
+                                        <UTooltip text="Generate preview using sample attendee">
+                                            <UButton
+                                                size="xs"
+                                                color="neutral"
+                                                variant="outline"
+                                                icon="i-lucide-printer"
+                                                :loading="isTestGenerating"
+                                                @click="handleTestPrint(cert)"
+                                            >
+                                                Test
+                                            </UButton>
+                                        </UTooltip>
                                         <UButton size="xs" color="error" variant="soft" icon="i-lucide-trash-2"
                                             @click="openDelete(cert)">Delete</UButton>
                                     </div>
@@ -71,9 +83,6 @@
                 <EventCertificateSettingsEdit v-model:open="isEditOpen" :event="props.event"
                     :certificate-id="certToEditId" @refresh-events="fetchCertificates" />
 
-                <!-- Delete Confirmation (standardized) -->
-                <DeleteCertificateConfirmation v-model="isDeleteOpen" :certificate="certToDeleteInfo"
-                    :is-loading="isDeleting" @confirm="confirmDelete" @cancel="isDeleteOpen = false" />
             </div>
         </template>
 
@@ -90,8 +99,8 @@
 <script setup>
 import EventCertificateSettingsEdit from '@/components/dashboard/slideover/EventCertificateSettingsEdit.vue'
 import EventCertificateSettingsCreate from '@/components/dashboard/slideover/EventCertificateSettingsCreate.vue'
-import DeleteCertificateConfirmation from '@/components/dashboard/modal/DeleteCertificateConfirmation.vue'
 import { useCertificates } from '@/composables/database/useCertificates'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 const { fetchAllByEventId, removeById, isLoading: isCertificatesLoading } = useCertificates()
 
@@ -103,52 +112,19 @@ const props = defineProps({
 })
 
 const isOpen = defineModel('open')
-const emit = defineEmits(['refreshEvents'])
+const emit = defineEmits(['refreshEvents', 'openDeleteModal'])
 
 const certificates = ref([])
 const isEditOpen = ref(false)
 const isCreateOpen = ref(false)
-const isDeleteOpen = ref(false)
 const certToEditId = ref(null)
-const isDeleting = ref(false)
-const certToDelete = ref(null)
-const certToDeleteInfo = computed(() => {
-    if (!certToDelete.value) return null
-    return {
-        filename: certToDelete.value?.data?.uploadedFile?.name || certToDelete.value?.data?.certificateFilename || 'certificate'
-    }
-})
+const isTestGenerating = ref(false)
+const TEST_UUID = 'sample-uuid-1234-5678'
 
 const openDelete = (cert) => {
-    certToDelete.value = cert
-    isDeleteOpen.value = true
+    emit('openDeleteModal', cert)
 }
 
-const confirmDelete = async () => {
-    try {
-        if (!certToDelete.value) return
-        isDeleting.value = true
-        const cert = certToDelete.value
-        // If there is a server-side file to delete, call API
-        if (cert?.data?.certificateFilename) {
-            try {
-                await $fetch(`/api/certificates/${encodeURIComponent(cert.data.certificateFilename)}`, { method: 'DELETE' })
-            } catch (err) {
-                console.warn('Failed to delete certificate file, continuing with DB delete', err)
-            }
-        }
-
-        await removeById(cert.id)
-        await fetchCertificates()
-
-        isDeleteOpen.value = false
-        certToDelete.value = null
-    } catch (e) {
-        console.error('Failed to delete certificate', e)
-    } finally {
-        isDeleting.value = false
-    }
-}
 
 const openEdit = (cert) => {
     certToEditId.value = cert?.id || null
@@ -157,6 +133,97 @@ const openEdit = (cert) => {
 
 const openCreate = () => {
     isCreateOpen.value = true
+}
+
+const handleTestPrint = async (certificate) => {
+    if (!props.event || !certificate) {
+        toast.add({
+            title: 'No certificate selected',
+            description: 'Create a certificate template before running a test print.',
+            color: 'warning'
+        })
+        return
+    }
+
+    try {
+        isTestGenerating.value = true
+        const mockAttendee = {
+            id: TEST_UUID,
+            first_name: 'Test',
+            last_name: 'Attendee',
+            email: 'test@example.com',
+            data: {
+                licence: 'LIC-001',
+                badge_id: 'BADGE-1234',
+                registration_number: 'REG-5678'
+            }
+        }
+
+        const eventData = {
+            ...props.event,
+            form: Array.isArray(props.event?.form) && props.event.form.length
+                ? props.event.form
+                : [
+                    { id: 'badge_id', name: 'badge_id', type: 'text' },
+                    { id: 'registration_number', name: 'registration_number', type: 'text' }
+                ]
+        }
+
+        const response = await fetch('/api/certificates/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                attendee: mockAttendee,
+                certificate: {
+                    ...certificate.data,
+                    certificateFilename: certificate.data?.certificateFilename || certificate.data?.uploadedFile?.name || '',
+                    eventName: props.event?.name || ''
+                },
+                eventData
+            })
+        })
+
+        if (!response.ok) {
+            throw new Error('Certificate API preview failed')
+        }
+
+        const pdfArrayBuffer = await response.arrayBuffer()
+        const blob = new Blob([pdfArrayBuffer], { type: 'application/pdf' })
+        const blobUrl = URL.createObjectURL(blob)
+        const iframe = document.createElement('iframe')
+        iframe.style.display = 'none'
+        iframe.src = blobUrl
+        document.body.appendChild(iframe)
+
+        iframe.onload = () => {
+            try {
+                if (window.electronAPI?.printSilent) {
+                    window.electronAPI.printSilent()
+                } else {
+                    iframe.contentWindow?.focus()
+                    iframe.contentWindow?.print()
+                }
+            } catch (err) {
+                console.error('Failed to trigger print dialog for test preview:', err)
+            } finally {
+                setTimeout(() => {
+                    document.body.removeChild(iframe)
+                    URL.revokeObjectURL(blobUrl)
+                }, 1000)
+            }
+        }
+    } catch (error) {
+        console.error('Failed to generate test certificate preview:', error)
+        toast.add({
+            title: 'Preview failed',
+            description: 'Could not generate a test certificate.',
+            color: 'error'
+        })
+    } finally {
+        isTestGenerating.value = false
+    }
 }
 
 const fetchCertificates = async () => {

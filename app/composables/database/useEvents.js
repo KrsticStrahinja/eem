@@ -155,6 +155,31 @@ export const useEvents = () => {
         }
     }
 
+    const updateEventIdcards = async (eventId, idcards) => {
+        clearError()
+        isLoading.value = true
+        try {
+            const payload = { idcard: idcards }
+            const query = supabase
+                .from('events')
+                .update(payload)
+                .eq('id', eventId)
+                .select('id, idcard')
+                .single()
+
+            const { data, error } = await logUpdate(query, 'events', payload)
+
+            if (error) throw error
+            events.value = events.value.map((eventItem) => (eventItem.id === eventId ? { ...eventItem, idcard: data.idcard } : eventItem))
+            return data
+        } catch (err) {
+            errorMessage.value = err?.message || 'Failed to update event identification templates'
+            throw err
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     // Update a single email template inside the events.emails JSON object
     const updateEventEmails = async (eventId, key, template) => {
         clearError()
@@ -555,6 +580,7 @@ export const useEvents = () => {
         updateEventAttendees,
         updateEventAttended,
         updateEventPaid,
+        updateEventIdcards,
         updateEventCertificate,
         updateEventEmails,
         fetchAttendeesPaginated,

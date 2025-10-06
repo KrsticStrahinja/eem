@@ -42,6 +42,7 @@
             v-model:open="isCertificateSettingsOpen"
             :event="eventToEdit"
             @refreshEvents="fetchEvents"
+            @openDeleteModal="openDeleteCertificateModal"
         />
 
         <DashboardModalDeleteEventConfirmation
@@ -50,6 +51,14 @@
             :is-loading="isLoading"
             @confirm="confirmDelete"
             @cancel="cancelDelete"
+        />
+
+        <DeleteCertificateConfirmation
+            v-model="isDeleteCertificateModalOpen"
+            :certificate="certificateToDeleteInfo"
+            :is-loading="isDeletingCertificate"
+            @confirm="confirmDeleteCertificate"
+            @cancel="cancelDeleteCertificate"
         />
 
         <div class="p-4">
@@ -173,9 +182,17 @@
     const eventToEdit = ref(null)
     const eventToDelete = ref(null)
 
+    // Certificate delete modal state
+    const isDeleteCertificateModalOpen = ref(false)
+    const certificateToDelete = ref(null)
+    const isDeletingCertificate = ref(false)
+
     import { useEvents } from '@/composables/database/useEvents'
+    import { useCertificates } from '@/composables/database/useCertificates'
     import { formatDate } from '@/composables/useHelpers'
+    import DeleteCertificateConfirmation from '@/components/dashboard/modal/DeleteCertificateConfirmation.vue'
     const { events, fetchEvents, isLoading, errorMessage, deleteEvent: deleteEventFromDb } = useEvents()
+    const { removeById } = useCertificates()
 
     onMounted(() => {
         fetchEvents()
@@ -219,6 +236,49 @@
             eventToDelete.value = null
         } catch (err) {
             console.error('Failed to delete event:', err)
+        }
+    }
+
+    // Certificate delete modal computed and functions
+    const certificateToDeleteInfo = computed(() => {
+        if (!certificateToDelete.value) return null
+        return {
+            filename: certificateToDelete.value?.data?.uploadedFile?.name || certificateToDelete.value?.data?.certificateFilename || 'certificate'
+        }
+    })
+
+    const openDeleteCertificateModal = (cert) => {
+        certificateToDelete.value = cert
+        isDeleteCertificateModalOpen.value = true
+    }
+
+    const cancelDeleteCertificate = () => {
+        certificateToDelete.value = null
+        isDeleteCertificateModalOpen.value = false
+    }
+
+    const confirmDeleteCertificate = async () => {
+        try {
+            if (!certificateToDelete.value) return
+            isDeletingCertificate.value = true
+            const cert = certificateToDelete.value
+            if (cert?.data?.certificateFilename) {
+                try {
+                    await $fetch(`/api/certificates/${encodeURIComponent(cert.data.certificateFilename)}`, { method: 'DELETE' })
+                } catch (err) {
+                    console.warn('Failed to delete certificate file, continuing with DB delete', err)
+                }
+            }
+
+            await removeById(cert.id)
+            await fetchEvents() // Refresh events to update certificate counts
+
+            isDeleteCertificateModalOpen.value = false
+            certificateToDelete.value = null
+        } catch (e) {
+            console.error('Failed to delete certificate', e)
+        } finally {
+            isDeletingCertificate.value = false
         }
     }
 </script>

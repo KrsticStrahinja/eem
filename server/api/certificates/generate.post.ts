@@ -44,22 +44,11 @@ export default defineEventHandler(async (event) => {
     
     // PDF is now shown at 100% zoom (1:1), so no scaling needed
     // Frontend uses actual PDF dimensions (595x842 for A4)
-    const frontendPdfWidth = 595  // Exact PDF width in frontend
-    const frontendPdfHeight = 842 // Exact PDF height in frontend
-    
-    const scaleX = pdfWidth / frontendPdfWidth   // Should be ~1.0 for same PDF
-    const scaleY = pdfHeight / frontendPdfHeight // Should be ~1.0 for same PDF
-    
-    // No offset - match the new preview without offset  
-    const editorOffsetX = 0
+    const frontendPdfWidth = 423
+    const frontendPdfHeight = 600
 
-    // Fine-tuning for name
-    const nameFinetuneOffsetX = -40 // Move even more left (negative = left)
-    const nameFinetuneOffsetY = 25  // Move even more down (positive = down)
-
-    // Fine-tuning for licence (different positioning)
-    const licenceFinetuneOffsetX = -50 // Move even more left for licence
-    const licenceFinetuneOffsetY = -5  // Move up for licence (negative = up)
+    const scaleX = pdfWidth / frontendPdfWidth
+    const scaleY = pdfHeight / frontendPdfHeight
 
     // Load a standard font
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -142,33 +131,19 @@ export default defineEventHandler(async (event) => {
         if (!field.position) continue
         
         const fieldText = getFieldText(field)
-        if (!fieldText) continue // Skip empty fields
+        if (!fieldText) continue
         
-        // Convert editor coordinates to PDF coordinates
         const pdfFontSize = (field.fontSize || 12) * Math.min(scaleX, scaleY)
-        
-        // Apply the same offset as frontend, then scale to PDF coordinates
-        const editorXWithOffset = field.position.x + editorOffsetX
-        const pdfX = editorXWithOffset * scaleX
-        const pdfY = pdfHeight - (field.position.y * scaleY) // Convert from top-based to bottom-based
-
-        // Apply fine-tuning adjustments based on field type
-        const finetuneOffsetX = field.type === 'licence' ? licenceFinetuneOffsetX : nameFinetuneOffsetX
-        const finetuneOffsetY = field.type === 'licence' ? licenceFinetuneOffsetY : nameFinetuneOffsetY
-        
-        const adjustedPdfX = pdfX + (finetuneOffsetX * scaleX)
-        const adjustedPdfY = pdfY - (finetuneOffsetY * scaleY) // Negative because PDF Y is inverted
-        
-        // Calculate text width for centering
-        const textWidth = font.widthOfTextAtSize(fieldText, pdfFontSize)
-        const centeredPdfX = adjustedPdfX - (textWidth / 2)
+        const pdfX = (field.position.x || 0) * scaleX
+        const pdfYFromTop = (field.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(fieldText, {
-          x: centeredPdfX,
-          y: adjustedPdfY,
+          x: pdfX,
+          y: drawY,
           size: pdfFontSize,
           font: font,
-          color: rgb(0, 0, 0), // Black color
+          color: rgb(0, 0, 0),
         })
       }
     } else {
@@ -177,20 +152,13 @@ export default defineEventHandler(async (event) => {
       if (certificate.name && certificate.name.position) {
         const nameText = `${attendee.first_name} ${attendee.last_name}`
         const pdfFontSize = (certificate.name.fontSize || 12) * Math.min(scaleX, scaleY)
-        
-        const editorXWithOffset = certificate.name.position.x + editorOffsetX
-        const pdfX = editorXWithOffset * scaleX
-        const pdfY = pdfHeight - (certificate.name.position.y * scaleY)
-
-        const adjustedPdfX = pdfX + (nameFinetuneOffsetX * scaleX)
-        const adjustedPdfY = pdfY - (nameFinetuneOffsetY * scaleY)
-        
-        const textWidth = font.widthOfTextAtSize(nameText, pdfFontSize)
-        const centeredPdfX = adjustedPdfX - (textWidth / 2)
+        const pdfX = (certificate.name.position.x || 0) * scaleX
+        const pdfYFromTop = (certificate.name.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(nameText, {
-          x: centeredPdfX,
-          y: adjustedPdfY,
+          x: pdfX,
+          y: drawY,
           size: pdfFontSize,
           font: font,
           color: rgb(0, 0, 0),
@@ -213,20 +181,13 @@ export default defineEventHandler(async (event) => {
         
         if (licenceText) {
           const pdfFontSize = (certificate.licence.fontSize || 12) * Math.min(scaleX, scaleY)
-          
-          const editorXWithOffset = certificate.licence.position.x + editorOffsetX
-          const pdfX = editorXWithOffset * scaleX
-          const pdfY = pdfHeight - (certificate.licence.position.y * scaleY)
-
-          const adjustedPdfX = pdfX + (licenceFinetuneOffsetX * scaleX)
-          const adjustedPdfY = pdfY - (licenceFinetuneOffsetY * scaleY)
-          
-          const licenceTextWidth = font.widthOfTextAtSize(licenceText, pdfFontSize)
-          const centeredPdfX = adjustedPdfX - (licenceTextWidth / 2)
+          const pdfX = (certificate.licence.position.x || 0) * scaleX
+          const pdfYFromTop = (certificate.licence.position.y || 0) * scaleY
+          const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
           firstPage.drawText(licenceText, {
-            x: centeredPdfX,
-            y: adjustedPdfY,
+            x: pdfX,
+            y: drawY,
             size: pdfFontSize,
             font: font,
             color: rgb(0, 0, 0),

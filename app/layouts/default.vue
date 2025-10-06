@@ -36,7 +36,7 @@
             </template>
         </UDashboardSidebar>
 
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto bg-gray-50">
             <slot />
         </div>
     </UDashboardGroup>
@@ -129,11 +129,16 @@
                     icon: 'i-lucide-download',
                     to: '/settings/export'
                 },
-                {
-                    label: 'Logs',
-                    icon: 'i-lucide-file-text',
-                    to: '/settings/logs'
-                }
+            {
+                label: 'Logs',
+                icon: 'i-lucide-file-text',
+                to: '/settings/logs'
+            },
+            {
+                label: 'Scan',
+                icon: 'i-lucide-scan-line',
+                to: '/settings/scan'
+            }
             ]
         }
     ],

@@ -119,29 +119,12 @@ export default defineEventHandler(async (event) => {
     // Get PDF page dimensions
     const { width: pdfWidth, height: pdfHeight } = firstPage.getSize()
     
-    // USE EXACT SAME LOGIC AS WORKING DOWNLOAD (generate.post.ts)
-    // Copy the exact working transformation from the download endpoint
+    // Use exact same scaling logic as generate.post.ts and builder
+    const PREVIEW_BASE_WIDTH = 423
+    const PREVIEW_BASE_HEIGHT = 600
     
-    // Calculate scale factor based on how PDF is displayed in the editor
-    // ===== NOVA JEDNOSTAVNA LOGIKA =====
-    // Frontend preview dimensions (iz CertificateTemplateForm.vue)
-    const previewWidth = 450  // estimatedPdfWidth iz komponente
-    const previewHeight = 600 // iframeHeight iz komponente
-    
-    // Scale faktori za novu logiku: pixel → point
-    const simpleScaleX = pdfWidth / previewWidth   // 595.32 / 450 = 1.323
-    const simpleScaleY = pdfHeight / previewHeight // 841.92 / 600 = 1.403
-    
-    // Stari scale faktori (za kompatibilnost)
-    const scaleX = simpleScaleX
-    const scaleY = simpleScaleY
-    const editorOffsetX = 80 // Dodao za kompatibilnost
-    
-    // Fine-tuning offseti (za kompatibilnost sa starim kodom)
-    const nameFinetuneOffsetX = -40
-    const nameFinetuneOffsetY = 25  
-    const licenceFinetuneOffsetX = -50
-    const licenceFinetuneOffsetY = -5
+    const scaleX = pdfWidth / PREVIEW_BASE_WIDTH
+    const scaleY = pdfHeight / PREVIEW_BASE_HEIGHT
 
     // Load a standard font
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
@@ -204,17 +187,17 @@ export default defineEventHandler(async (event) => {
         if (!field.position) continue
         
         const fieldText = getFieldText(field)
-        if (!fieldText) continue // Skip empty fields
+        if (!fieldText) continue
         
-        // Direktno mapiranje koordinata iz baze - JEDNOSTAVNO!
-        const fieldX = (field.position.x || 0) * simpleScaleX
-        const fieldY = pdfHeight - ((field.position.y || 0) * simpleScaleY) // Flip Y osa
-        const fieldFontSize = (field.fontSize || 12) * simpleScaleX
+        const pdfFontSize = (field.fontSize || 12) * Math.min(scaleX, scaleY)
+        const pdfX = (field.position.x || 0) * scaleX
+        const pdfYFromTop = (field.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(fieldText, {
-          x: fieldX,
-          y: fieldY,
-          size: fieldFontSize,
+          x: pdfX,
+          y: drawY,
+          size: pdfFontSize,
           font: font,
           color: rgb(0, 0, 0),
         })
@@ -224,14 +207,15 @@ export default defineEventHandler(async (event) => {
       // Add name to the PDF
       if (certificateData.name && certificateData.name.position) {
         const nameText = `${attendee.first_name} ${attendee.last_name}`
-        const nameX = (certificateData.name.position.x || 0) * simpleScaleX
-        const nameY = pdfHeight - ((certificateData.name.position.y || 0) * simpleScaleY)
-        const nameFontSize = (certificateData.name.fontSize || 12) * simpleScaleX
+        const pdfFontSize = (certificateData.name.fontSize || 12) * Math.min(scaleX, scaleY)
+        const pdfX = (certificateData.name.position.x || 0) * scaleX
+        const pdfYFromTop = (certificateData.name.position.y || 0) * scaleY
+        const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
         firstPage.drawText(nameText, {
-          x: nameX,
-          y: nameY,
-          size: nameFontSize,
+          x: pdfX,
+          y: drawY,
+          size: pdfFontSize,
           font: font,
           color: rgb(0, 0, 0),
         })
@@ -252,14 +236,15 @@ export default defineEventHandler(async (event) => {
         }
         
         if (licenceText) {
-          const licenceX = (certificateData.licence.position.x || 0) * simpleScaleX
-          const licenceY = pdfHeight - ((certificateData.licence.position.y || 0) * simpleScaleY)
-          const licenceFontSize = (certificateData.licence.fontSize || 12) * simpleScaleX
+          const pdfFontSize = (certificateData.licence.fontSize || 12) * Math.min(scaleX, scaleY)
+          const pdfX = (certificateData.licence.position.x || 0) * scaleX
+          const pdfYFromTop = (certificateData.licence.position.y || 0) * scaleY
+          const drawY = pdfHeight - pdfYFromTop - pdfFontSize
 
           firstPage.drawText(licenceText, {
-            x: licenceX,
-            y: licenceY,
-            size: licenceFontSize,
+            x: pdfX,
+            y: drawY,
+            size: pdfFontSize,
             font: font,
             color: rgb(0, 0, 0),
           })
