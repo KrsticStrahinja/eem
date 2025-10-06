@@ -303,16 +303,8 @@ const printPdfBytes = async pdfBytes => {
     const blobUrl = URL.createObjectURL(blob)
     const iframe = document.createElement('iframe')
     iframe.style.display = 'none'
-    iframe.src = blobUrl
-    document.body.appendChild(iframe)
-
-    const cleanup = () => {
-        setTimeout(() => {
-            document.body.removeChild(iframe)
-            URL.revokeObjectURL(blobUrl)
-        }, 2000)
-    }
-
+    
+    // Set onload handler BEFORE setting src to ensure it's registered in time
     iframe.onload = async () => {
         try {
             // Electron app overrides window.print() to be silent
@@ -322,9 +314,15 @@ const printPdfBytes = async pdfBytes => {
         } catch (err) {
             console.error('Failed to trigger print:', err)
         } finally {
-            cleanup()
+            setTimeout(() => {
+                document.body.removeChild(iframe)
+                URL.revokeObjectURL(blobUrl)
+            }, 1000)
         }
     }
+    
+    iframe.src = blobUrl
+    document.body.appendChild(iframe)
 }
 
 const renderIdentificationCard = async (attendeeData, eventData, scannedUuid) => {
