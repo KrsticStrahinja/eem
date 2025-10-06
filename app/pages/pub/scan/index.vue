@@ -77,18 +77,40 @@
 
         <!-- Success Popup (Centered Overlay) -->
         <div v-if="showSuccessModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="w-full max-w-md">
-                <UCard class="rounded-md">
-                    <div class="space-y-4 py-2">
+            <div class="w-full max-w-lg">
+                <UCard class="rounded-xl shadow-2xl">
+                    <div class="space-y-6 py-6">
+                        <!-- Success Icon -->
                         <div class="flex justify-center">
-                            <UIcon name="i-lucide-check" class="w-12 h-12 text-green-600" />
+                            <div class="bg-green-100 rounded-full p-6">
+                                <UIcon name="i-lucide-check" class="w-20 h-20 text-green-600" />
+                            </div>
                         </div>
-                        <div v-if="attendee" class="text-center">
-                            <p class="text-2xl font-bold text-gray-900">
+                        
+                        <!-- Attendee Info -->
+                        <div v-if="attendee" class="text-center space-y-3">
+                            <p class="text-5xl font-bold text-gray-900">
                                 {{ attendee.first_name }} {{ attendee.last_name }}
                             </p>
+                            <p v-if="attendee.email" class="text-xl text-gray-600">
+                                {{ attendee.email }}
+                            </p>
+                            <div class="pt-3">
+                                <UBadge 
+                                    :color="wasAlreadyAttended ? 'orange' : 'green'" 
+                                    size="lg"
+                                    variant="subtle"
+                                    class="px-6 py-2 text-base"
+                                >
+                                    {{ wasAlreadyAttended ? 'Already Checked In' : 'Successfully Checked In' }}
+                                </UBadge>
+                            </div>
                         </div>
-                        <p class="text-xs text-gray-500 text-center">Closing in {{ autoCloseCountdown }}...</p>
+                        
+                        <!-- Countdown -->
+                        <p class="text-base text-gray-500 text-center font-medium">
+                            Closing in {{ autoCloseCountdown }} seconds...
+                        </p>
                     </div>
                 </UCard>
             </div>
@@ -277,59 +299,31 @@ const embedQrCode = async (page, pdfDoc, dataUrl, topLeftX, topLeftY, field, sca
 const printPdfBytes = async pdfBytes => {
     if (typeof window === 'undefined') return
 
-    try {
-        // Check if running in Electron with silent print capability
-        if (window.electronAPI?.printSilent || window.electronAPI?.printPdfSilent || window.electronAPI?.print) {
-            console.log('Electron API detected, attempting silent print...')
-            
-            // Convert PDF bytes to base64 for Electron
-            const base64Pdf = btoa(
-                new Uint8Array(pdfBytes).reduce((data, byte) => data + String.fromCharCode(byte), '')
-            )
-            
-            // Try different possible Electron API methods
-            if (window.electronAPI.printPdfSilent) {
-                await window.electronAPI.printPdfSilent(base64Pdf)
-                console.log('PDF sent via printPdfSilent')
-            } else if (window.electronAPI.printSilent) {
-                await window.electronAPI.printSilent(base64Pdf)
-                console.log('PDF sent via printSilent')
-            } else if (window.electronAPI.print) {
-                await window.electronAPI.print(base64Pdf)
-                console.log('PDF sent via print')
-            }
-            
-            return // Exit early, printing handled by Electron
-        }
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+    const blobUrl = URL.createObjectURL(blob)
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.src = blobUrl
+    document.body.appendChild(iframe)
 
-        // Fallback: Standard browser print dialog
-        console.log('Using browser print dialog (not in Electron)')
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' })
-        const blobUrl = URL.createObjectURL(blob)
-        const iframe = document.createElement('iframe')
-        iframe.style.display = 'none'
-        iframe.src = blobUrl
-        document.body.appendChild(iframe)
+    const cleanup = () => {
+        setTimeout(() => {
+            document.body.removeChild(iframe)
+            URL.revokeObjectURL(blobUrl)
+        }, 2000)
+    }
 
-        const cleanup = () => {
-            setTimeout(() => {
-                document.body.removeChild(iframe)
-                URL.revokeObjectURL(blobUrl)
-            }, 1000)
+    iframe.onload = async () => {
+        try {
+            // Electron app overrides window.print() to be silent
+            // Just call print() and let Electron handle it
+            iframe.contentWindow?.focus()
+            iframe.contentWindow?.print()
+        } catch (err) {
+            console.error('Failed to trigger print:', err)
+        } finally {
+            cleanup()
         }
-
-        iframe.onload = async () => {
-            try {
-                iframe.contentWindow?.focus()
-                iframe.contentWindow?.print()
-            } catch (err) {
-                console.error('Failed to trigger print dialog:', err)
-            } finally {
-                cleanup()
-            }
-        }
-    } catch (err) {
-        console.error('Failed to print PDF:', err)
     }
 }
 
