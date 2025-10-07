@@ -21,7 +21,7 @@
             </template>
         </UDashboardNavbar>
     </div>
-    <div class="w-full max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="w-full max-w-full sm:max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
         <div v-if="isLoading" class="text-gray-500">Loading...</div>
         <div v-else-if="errorMessage" class="text-red-600">{{ errorMessage }}</div>
         <div v-else-if="!eventData">Nothing to show.</div>
