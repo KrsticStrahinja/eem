@@ -10,7 +10,7 @@
                     <UButton
                         icon="i-lucide-arrow-left"
                         variant="outline"
-                        size="lg"
+                        size="sm"
                         color="neutral"
                         @click="$router.back()"
                     >
@@ -21,7 +21,7 @@
             </template>
         </UDashboardNavbar>
     </div>
-    <div class="w-1/3 mx-auto p-4">
+    <div class="w-full max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
         <div v-if="isLoading" class="text-gray-500">Loading...</div>
         <div v-else-if="errorMessage" class="text-red-600">{{ errorMessage }}</div>
         <div v-else-if="!eventData">Nothing to show.</div>
@@ -63,13 +63,13 @@
 
                                 <div class="space-y-3">
                                     <!-- Quick selection buttons -->
-                                    <div class="flex gap-2 mb-3">
+                                    <div class="flex flex-col sm:flex-row gap-2 mb-3">
                                         <UButton size="xs" variant="soft" color="secondary" @click="selectAllDates"
-                                            :disabled="selectedEventDates.length === availableEventDates.length">
+                                            :disabled="selectedEventDates.length === availableEventDates.length" class="w-full sm:w-auto">
                                             Select All
                                         </UButton>
                                         <UButton size="xs" variant="soft" color="error" @click="clearAllDates"
-                                            :disabled="selectedEventDates.length === 0">
+                                            :disabled="selectedEventDates.length === 0" class="w-full sm:w-auto">
                                             Clear All
                                         </UButton>
                                     </div>
@@ -147,9 +147,9 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end">
+                <div class="flex justify-end pt-4">
                     <UButton type="submit" color="primary" :loading="isSubmitting"
-                        :disabled="isSubmitting || !formSchema?.length">
+                        :disabled="isSubmitting || !formSchema?.length" class="w-full sm:w-auto">
                         Submit
                     </UButton>
                 </div>
