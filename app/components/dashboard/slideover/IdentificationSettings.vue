@@ -320,10 +320,22 @@ const renderIdentificationCardPreview = async (card, attendeeData, eventData, uu
         throw new Error('Identification card template is missing')
     }
 
-    const response = await fetch(card.templateUrl)
+    // Convert relative URL to API endpoint if needed
+    let templateUrl = card.templateUrl
+    if (templateUrl.startsWith('/idcards/')) {
+        const filename = templateUrl.split('/').pop()
+        templateUrl = `/api/idcards/${filename}`
+    }
+
+    console.log('Test preview: fetching template from:', templateUrl)
+
+    const response = await fetch(templateUrl)
     if (!response.ok) {
+        console.error(`Test preview: failed to load template from ${templateUrl}, status: ${response.status}`)
         throw new Error(`Failed to load template: ${response.status}`)
     }
+
+    console.log('Test preview: successfully loaded template')
     const templateArrayBuffer = await response.arrayBuffer()
     const pdfDoc = await PDFDocument.load(templateArrayBuffer)
     const pages = pdfDoc.getPages()
@@ -383,6 +395,8 @@ const handleTestPrint = async (card) => {
         return
     }
 
+    console.log('Test print initiated for card:', card)
+
     try {
         isTestGenerating.value = true
         const mockAttendee = {
@@ -406,6 +420,11 @@ const handleTestPrint = async (card) => {
                     { id: 'registration_number', name: 'registration_number', type: 'text' }
                 ]
         }
+
+        console.log('About to render preview with card data:', {
+            templateUrl: card.templateUrl,
+            templateFilename: card.templateFilename
+        })
 
         const pdfBytes = await renderIdentificationCardPreview(card, mockAttendee, eventData, TEST_UUID)
         const blob = new Blob([pdfBytes], { type: 'application/pdf' })
@@ -501,9 +520,12 @@ const confirmDelete = async () => {
 
         if (cardToDelete.value.templateFilename) {
             try {
+                console.log('Attempting to delete idcard file:', cardToDelete.value.templateFilename)
                 await $fetch(`/api/idcards/${encodeURIComponent(cardToDelete.value.templateFilename)}`, { method: 'DELETE' })
+                console.log('Successfully deleted idcard file:', cardToDelete.value.templateFilename)
             } catch (err) {
                 console.warn('Failed to delete idcard file, continuing...', err)
+                // Don't fail the whole operation if file deletion fails
             }
         }
 

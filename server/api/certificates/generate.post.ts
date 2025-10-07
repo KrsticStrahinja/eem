@@ -21,8 +21,11 @@ export default defineEventHandler(async (event) => {
     }
 
     // Load the original PDF
+    // In preview/production mode, files are served from .output/public/
     const projectRoot = process.cwd()
-    const certificatePath = path.join(projectRoot, 'public', 'certificates', certificate.certificateFilename)
+    const isPreview = projectRoot.includes('.output')
+    const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+    const certificatePath = path.join(actualProjectRoot, '.output', 'public', 'certificates', certificate.certificateFilename)
     
     let pdfBytes
     try {

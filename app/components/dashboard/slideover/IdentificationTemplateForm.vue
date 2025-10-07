@@ -269,7 +269,15 @@ const hasPreview = computed(() => {
 })
 
 const computedPdfSrc = computed(() => {
-    const url = objectUrl.value || props.pdfUrl || ''
+    let url = objectUrl.value || props.pdfUrl || ''
+
+    // If it's a relative URL starting with /idcards/ or /certificates/, convert to API endpoint
+    if (url && (url.startsWith('/idcards/') || url.startsWith('/certificates/'))) {
+        const filename = url.split('/').pop()
+        const type = url.startsWith('/idcards/') ? 'idcards' : 'certificates'
+        url = `/api/${type}/${filename}`
+    }
+
     return url ? `${url}#toolbar=0&navpanes=0&scrollbar=0&view=Fit` : ''
 })
 

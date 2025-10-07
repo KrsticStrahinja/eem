@@ -2,8 +2,11 @@ import { promises as fsp } from 'fs'
 import path from 'path'
 
 export default defineEventHandler(async () => {
+  // In preview/production mode, files are served from .output/public/
   const projectRoot = process.cwd()
-  const dir = path.join(projectRoot, 'public', 'certificates')
+  const isPreview = projectRoot.includes('.output')
+  const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+  const dir = path.join(actualProjectRoot, '.output', 'public', 'certificates')
 
   try {
     await fsp.mkdir(dir, { recursive: true })

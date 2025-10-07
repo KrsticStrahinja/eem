@@ -75,7 +75,7 @@ const fetchCertificates = async () => {
 onMounted(fetchCertificates)
 
 const viewFile = (file) => {
-    window.open(file.url, '_blank', 'noopener')
+    window.open(`/api/certificates/${encodeURIComponent(file.filename)}`, '_blank', 'noopener')
 }
 
 const openDeleteModal = (file) => {

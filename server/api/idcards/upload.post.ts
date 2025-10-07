@@ -14,8 +14,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Missing identification card file' })
     }
 
+    // In preview/production mode, files are served from .output/public/
+    // But uploads should go to the actual project public folder
     const projectRoot = process.cwd()
-    const publicDir = path.join(projectRoot, 'public', 'idcards')
+    const isPreview = projectRoot.includes('.output')
+    const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+    const publicDir = path.join(actualProjectRoot, '.output', 'public', 'idcards')
 
     await fsp.mkdir(publicDir, { recursive: true })
 
@@ -27,6 +31,8 @@ export default defineEventHandler(async (event) => {
     await fsp.writeFile(filePath, filePart.data)
 
     const publicUrl = `/idcards/${filename}`
+
+    console.log('Identification card uploaded successfully:', { filename, publicUrl, filePath })
 
     return { ok: true, url: publicUrl, filename }
   } catch (err) {

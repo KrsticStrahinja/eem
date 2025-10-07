@@ -1,0 +1,34 @@
+import { promises as fsp } from 'fs'
+import path from 'path'
+
+export default defineEventHandler(async (event) => {
+  const { filename } = event.context.params || {}
+  if (!filename) throw createError({ statusCode: 400, statusMessage: 'Missing filename' })
+
+  // In preview/production mode, files are served from .output/public/
+  const projectRoot = process.cwd()
+  const isPreview = projectRoot.includes('.output')
+  const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+  const baseDir = path.join(actualProjectRoot, '.output', 'public', 'certificates')
+  const targetPath = path.resolve(baseDir, String(filename))
+
+  // Security check - ensure the resolved path is within the base directory
+  if (!targetPath.startsWith(path.resolve(baseDir))) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid filename' })
+  }
+
+  try {
+    const fileContent = await fsp.readFile(targetPath)
+    setHeader(event, 'Content-Type', 'application/pdf')
+    setHeader(event, 'Cache-Control', 'public, max-age=604800')
+    // Remove X-Frame-Options to allow embedding in iframes // 7 dana
+    return fileContent
+  } catch (e: any) {
+    if (e?.code === 'ENOENT') {
+      console.error(`Certificate file not found: ${filename}`)
+      throw createError({ statusCode: 404, statusMessage: 'File not found' })
+    }
+    console.error('Failed to read certificate file:', e)
+    throw createError({ statusCode: 500, statusMessage: 'Failed to read file' })
+  }
+})

@@ -334,8 +334,15 @@ const renderIdentificationCard = async (attendeeData, eventData, scannedUuid) =>
     }
 
     try {
-        const response = await fetch(card.templateUrl)
+        // Izvuci filename iz templateUrl i koristi API endpoint
+        const urlParts = card.templateUrl.split('/')
+        const filename = urlParts[urlParts.length - 1]
+
+        console.log('Attempting to fetch identification template via API:', filename)
+
+        const response = await fetch(`/api/idcards/${filename}`)
         if (!response.ok) {
+            console.error(`Failed to load idcard template: ${response.status} for filename: ${filename}`)
             throw new Error(`Failed to load idcard template: ${response.status}`)
         }
         const templateArrayBuffer = await response.arrayBuffer()

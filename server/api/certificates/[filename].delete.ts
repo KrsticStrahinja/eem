@@ -7,7 +7,11 @@ export default defineEventHandler(async (event) => {
   if (!filename) throw createError({ statusCode: 400, statusMessage: 'Missing filename' })
 
   // Build absolute path and ensure it's within public/certificates
-  const baseDir = path.join(process.cwd(), 'public', 'certificates')
+  // In preview/production mode, files are served from .output/public/
+  const projectRoot = process.cwd()
+  const isPreview = projectRoot.includes('.output')
+  const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+  const baseDir = path.join(actualProjectRoot, '.output', 'public', 'certificates')
   const targetPath = path.resolve(baseDir, String(filename))
   if (!targetPath.startsWith(path.resolve(baseDir))) {
     throw createError({ statusCode: 400, statusMessage: 'Invalid filename' })

@@ -108,7 +108,7 @@ const handleSave = async () => {
         })
 
         const newCard = {
-            id: crypto.randomUUID(),
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: cardTitle.value,
             fields: cardFields.value,
             templateUrl: uploadResponse?.url || '',

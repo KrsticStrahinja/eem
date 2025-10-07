@@ -88,6 +88,12 @@ watch(isOpen, (open) => {
         uploadedFile.value = existingCard.value.uploadedFile || null
         pdfPreviewUrl.value = existingCard.value.templateUrl || ''
         rawFile.value = null
+
+        console.log('Editing identification card:', {
+            title: cardTitle.value,
+            templateUrl: pdfPreviewUrl.value,
+            templateFilename: existingCard.value.templateFilename
+        })
     }
 })
 

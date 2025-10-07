@@ -15,8 +15,12 @@ export default defineEventHandler(async (event) => {
     }
 
     const runtime = useRuntimeConfig()
+    // In preview/production mode, files are served from .output/public/
+    // But uploads should go to the actual project public folder
     const projectRoot = process.cwd()
-    const publicDir = path.join(projectRoot, 'public', 'certificates')
+    const isPreview = projectRoot.includes('.output')
+    const actualProjectRoot = isPreview ? path.resolve(projectRoot, '..') : projectRoot
+    const publicDir = path.join(actualProjectRoot, '.output', 'public', 'certificates')
 
     await fsp.mkdir(publicDir, { recursive: true })
 
