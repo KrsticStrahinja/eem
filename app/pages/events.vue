@@ -266,7 +266,7 @@
                 try {
                     await $fetch(`/api/certificates/${encodeURIComponent(cert.data.certificateFilename)}`, { method: 'DELETE' })
                 } catch (err) {
-                    console.warn('Failed to delete certificate file, continuing with DB delete', err)
+                    // Continue with DB delete even if file deletion fails
                 }
             }
 

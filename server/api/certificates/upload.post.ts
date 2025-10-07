@@ -35,8 +35,6 @@ export default defineEventHandler(async (event) => {
 
     return { ok: true, url: publicUrl, filename }
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Certificate upload failed:', err)
     throw createError({ statusCode: 500, statusMessage: 'Failed to upload certificate' })
   }
 })

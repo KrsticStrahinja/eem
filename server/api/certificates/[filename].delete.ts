@@ -38,7 +38,6 @@ export default defineEventHandler(async (event) => {
   } catch (e: any) {
     if (e?.code === 'ENOENT') throw createError({ statusCode: 404, statusMessage: 'File not found' })
     // eslint-disable-next-line no-console
-    console.error('Failed to delete certificate', e)
     throw createError({ statusCode: 500, statusMessage: 'Failed to delete certificate' })
   }
 })

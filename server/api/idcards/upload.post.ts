@@ -32,11 +32,9 @@ export default defineEventHandler(async (event) => {
 
     const publicUrl = `/idcards/${filename}`
 
-    console.log('Identification card uploaded successfully:', { filename, publicUrl, filePath })
 
     return { ok: true, url: publicUrl, filename }
   } catch (err) {
-    console.error('Identification card upload failed:', err)
     throw createError({ statusCode: 500, statusMessage: 'Failed to upload identification card' })
   }
 })

@@ -12,7 +12,6 @@ export default defineEventHandler(async (event) => {
   const baseDir = path.join(actualProjectRoot, '.output', 'public', 'idcards')
   const targetPath = path.resolve(baseDir, String(filename))
 
-  console.log('API idcards GET:', { filename, baseDir, targetPath })
 
   // Security check - ensure the resolved path is within the base directory
   if (!targetPath.startsWith(path.resolve(baseDir))) {
@@ -28,22 +27,18 @@ export default defineEventHandler(async (event) => {
   } catch (e: any) {
     if (e?.code === 'ENOENT') {
       // Try to find the file in certificates folder as fallback
-      console.log(`Identification card file not found in idcards: ${filename}, trying certificates folder`)
       const certificatesBaseDir = path.join(process.cwd(), '.output', 'public', 'certificates')
       const certificatesTargetPath = path.resolve(certificatesBaseDir, String(filename))
 
       try {
         const fileContent = await fsp.readFile(certificatesTargetPath)
-        console.log(`Found file in certificates folder: ${filename}`)
         setHeader(event, 'Content-Type', 'application/pdf')
         setHeader(event, 'Cache-Control', 'public, max-age=604800')
         return fileContent
       } catch (certError: any) {
-        console.error(`File not found in either idcards or certificates: ${filename}`)
         throw createError({ statusCode: 404, statusMessage: 'File not found' })
       }
     }
-    console.error('Failed to read identification card file:', e)
     throw createError({ statusCode: 500, statusMessage: 'Failed to read file' })
   }
 })

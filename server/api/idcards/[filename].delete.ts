@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
     return { ok: true }
   } catch (e: any) {
     if (e?.code === 'ENOENT') throw createError({ statusCode: 404, statusMessage: 'File not found' })
-    console.error('Failed to delete identification card', e)
     throw createError({ statusCode: 500, statusMessage: 'Failed to delete identification card' })
   }
 })

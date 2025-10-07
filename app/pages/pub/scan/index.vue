@@ -329,7 +329,6 @@ const renderIdentificationCard = async (attendeeData, eventData, scannedUuid) =>
     if (typeof window === 'undefined') return
     const card = pickIdentificationCard(eventData, attendeeData)
     if (!card || !card.templateUrl) {
-        console.warn('No identification template configured for this event')
         return
     }
 
@@ -338,18 +337,15 @@ const renderIdentificationCard = async (attendeeData, eventData, scannedUuid) =>
         const urlParts = card.templateUrl.split('/')
         const filename = urlParts[urlParts.length - 1]
 
-        console.log('Attempting to fetch identification template via API:', filename)
 
         const response = await fetch(`/api/idcards/${filename}`)
         if (!response.ok) {
-            console.error(`Failed to load idcard template: ${response.status} for filename: ${filename}`)
             throw new Error(`Failed to load idcard template: ${response.status}`)
         }
         const templateArrayBuffer = await response.arrayBuffer()
         const pdfDoc = await PDFDocument.load(templateArrayBuffer)
         const pages = pdfDoc.getPages()
         if (!pages.length) {
-            console.warn('Identification template does not contain any pages')
             return
         }
 

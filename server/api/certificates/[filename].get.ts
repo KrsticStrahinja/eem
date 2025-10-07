@@ -25,10 +25,8 @@ export default defineEventHandler(async (event) => {
     return fileContent
   } catch (e: any) {
     if (e?.code === 'ENOENT') {
-      console.error(`Certificate file not found: ${filename}`)
       throw createError({ statusCode: 404, statusMessage: 'File not found' })
     }
-    console.error('Failed to read certificate file:', e)
     throw createError({ statusCode: 500, statusMessage: 'Failed to read file' })
   }
 })

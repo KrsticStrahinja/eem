@@ -31,7 +31,6 @@ export default defineEventHandler(async (event) => {
     try {
       pdfBytes = await readFile(certificatePath)
     } catch (error) {
-      console.error('Failed to read certificate file:', error)
       throw createError({ statusCode: 404, statusMessage: 'Certificate file not found' })
     }
 
