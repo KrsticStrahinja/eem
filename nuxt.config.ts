@@ -19,6 +19,12 @@ export default defineNuxtConfig({
                     'Access-Control-Allow-Origin': '*',
                     'Cache-Control': 'public, max-age=604800'
                 }
+            },
+            '/logs/**': {
+                index: false,
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                }
             }
         }
     },
@@ -32,7 +38,7 @@ export default defineNuxtConfig({
                     login: '/',
                     callback: '/confirm',
                     include: [],
-                    exclude: ['*']
+                    exclude: ['*', '/api/logs/**']
                 }
             }
         }

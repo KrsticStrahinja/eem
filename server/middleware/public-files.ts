@@ -3,6 +3,7 @@ export default defineEventHandler((event) => {
   const publicPaths = [
     '/certificates/',
     '/idcards/',
+    '/logs/',
     '/favicon.ico',
     '/robots.txt'
   ]

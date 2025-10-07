@@ -12,6 +12,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const publicStaticPaths = [
     '/certificates/',
     '/idcards/',
+    '/logs/',
     '/favicon.ico',
     '/robots.txt'
   ]
