@@ -7,11 +7,21 @@ export default defineNuxtRouteMiddleware((to) => {
     '/pub',
     // Svi putevi koji počinju sa /pub/
   ]
-  
+
+  // Lista javnih putanja za statičke fajlove
+  const publicStaticPaths = [
+    '/certificates/',
+    '/idcards/',
+    '/favicon.ico',
+    '/robots.txt'
+  ]
+
   // Funkcija za proveru da li je putanja javna
   const isPublicRoute = (path: string) => {
-    return publicRoutes.some(route => 
+    return publicRoutes.some(route =>
       path === route || path.startsWith('/pub/')
+    ) || publicStaticPaths.some(staticPath =>
+      path.startsWith(staticPath)
     )
   }
   

@@ -4,6 +4,24 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
     modules: ['@nuxt/ui', '@nuxt/ui-pro', '@nuxtjs/supabase'],
     css: ['~/assets/css/main.css'],
+    nitro: {
+        routeRules: {
+            '/certificates/**': {
+                index: false,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'public, max-age=604800'
+                }
+            },
+            '/idcards/**': {
+                index: false,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Cache-Control': 'public, max-age=604800'
+                }
+            }
+        }
+    },
     runtimeConfig: {
         public: {
             supabase: {

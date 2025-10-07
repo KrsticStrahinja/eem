@@ -14,9 +14,7 @@
                     This action cannot be undone.
                 </p>
             </div>
-        </template>
 
-        <template #content>
             <DialogTitle class="sr-only">Delete Identification Confirmation</DialogTitle>
             <DialogDescription class="sr-only">
                 Confirm deletion of identification template {{ card?.title || card?.templateFilename }}. This action cannot be undone.

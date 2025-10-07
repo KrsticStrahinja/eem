@@ -14,9 +14,7 @@
                     This action cannot be undone.
                 </p>
             </div>
-        </template>
 
-        <template #content>
             <DialogTitle class="sr-only">Delete Certificate Confirmation</DialogTitle>
             <DialogDescription class="sr-only">
                 Confirm deletion of certificate {{ certificate?.filename }}. This action cannot be undone.

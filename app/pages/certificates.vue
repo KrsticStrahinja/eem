@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        <DashboardModalDeleteCertificateConfirmation
+        <DeleteCertificateConfirmation
             v-model="isDeleteModalOpen"
             :certificate="fileToDelete"
             :is-loading="deleting === fileToDelete?.filename"
